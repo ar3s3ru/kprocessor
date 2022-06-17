@@ -1,4 +1,4 @@
-package kafkagoprocessor
+package kprocessor
 
 import (
 	"context"
