@@ -1,0 +1,33 @@
+version: "3"
+services:
+  zookeeper:
+    image: "bitnami/zookeeper:3.8"
+    profiles: [ "all", "infra" ]
+    ports:
+      - "2181:2181"
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: yes
+
+  kafka:
+    image: "bitnami/kafka:3.1"
+    profiles: [ "all", "infra" ]
+    ports:
+      - "9092:9092"
+      - "29094:29094"
+    depends_on:
+      - zookeeper
+    environment:
+      ALLOW_PLAINTEXT_LISTENER: yes
+      KAFKA_BROKER_ID: 1
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: CLIENT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_LISTENERS: CLIENT://:29094,EXTERNAL://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: CLIENT://kafka:29094,EXTERNAL://localhost:9092
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: CLIENT
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "false"
+      KAFKA_CFG_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CFG_OFFSETS_TOPIC_NUM_PARTITIONS: 3
+      KAFKA_CFG_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_CFG_TRANSACTION_STATE_LOG_NUM_PARTITIONS: 3
+      KAFKA_CFG_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_CFG_GROUP_INITIAL_REBALANCE_DELAY_MS: 0

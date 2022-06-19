@@ -8,11 +8,8 @@ import (
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
-<<<<<<< HEAD
-=======
 // RecordContext represents the context of a Kafka record,
 // outside of its key and value.
->>>>>>> d433e78 (feat: implement OrderedConsumer and TypedProcessor)
 type RecordContext struct {
 	// Headers are optional key/value pairs that are passed along with
 	// records.
@@ -20,9 +17,6 @@ type RecordContext struct {
 	// These are purely for producers and consumers; Kafka does not look at
 	// this field and only writes it to disk.
 	Headers []kgo.RecordHeader
-
-	// NOTE: if logAppendTime, timestamp is MaxTimestamp, not first + delta
-	// zendesk/ruby-kafka#706
 
 	// Timestamp is the timestamp that will be used for this record.
 	//
@@ -78,43 +72,23 @@ type RecordContext struct {
 	Offset int64
 }
 
-<<<<<<< HEAD
-=======
-// TypedProcessor is a different type of Processor interface
-// that uses concrete Go types for keys and values.
->>>>>>> d433e78 (feat: implement OrderedConsumer and TypedProcessor)
-type TypedProcessor[K any, V any] interface {
-	Process(ctx context.Context, key K, value V, record RecordContext) error
+// Typed is a different type of Processor interface that uses concrete Go types for keys and values.
+type Typed[K any, V any] interface {
+	Process(ctx context.Context, key K, value V, rctx RecordContext) error
 }
 
-<<<<<<< HEAD
-func FromTypedProcessor[K any, V any](
-	p TypedProcessor[K, V],
-	keyDeserializer Deserializer[K],
-	valueDeserializer Deserializer[V],
-) Processor {
-	return ProcessorFunc(func(ctx context.Context, record *kgo.Record) error {
-		key, err := keyDeserializer(record.Key)
-		if err != nil {
-			return fmt.Errorf("FromTypedProcessor: failed to deserialize key from byte array, %w", err)
-		}
-
-		value, err := valueDeserializer(record.Value)
-		if err != nil {
-			return fmt.Errorf("FromTypedProcessor: failed to deserialize value from byte array, %w", err)
-=======
-// TypedProcessorFunc is a functional implementation of the TypedProcessor interface.
-type TypedProcessorFunc[K any, V any] func(context.Context, K, V, RecordContext) error
+// TypedFunc is a functional implementation of the Typed processor interface.
+type TypedFunc[K any, V any] func(context.Context, K, V, RecordContext) error
 
 // Process executes the function behind this type.
-func (fn TypedProcessorFunc[K, V]) Process(ctx context.Context, key K, value V, record RecordContext) error {
-	return fn(ctx, key, value, record)
+func (fn TypedFunc[K, V]) Process(ctx context.Context, key K, value V, rctx RecordContext) error {
+	return fn(ctx, key, value, rctx)
 }
 
-// FromTypedProcessor converts a TypedProcessor instance into a standard
+// FromTyped converts a Typed processor instance into a standard
 // Processor type, by providing a key/value type factor and deserializer instance.
-func FromTypedProcessor[K any, V any](
-	p TypedProcessor[K, V],
+func FromTyped[K any, V any](
+	p Typed[K, V],
 	keyFactory func() K,
 	keyDeserializer Deserializer[K],
 	valueFactory func() V,
@@ -123,13 +97,12 @@ func FromTypedProcessor[K any, V any](
 	return ProcessorFunc(func(ctx context.Context, record *kgo.Record) error {
 		key := keyFactory()
 		if err := keyDeserializer(key, record.Key); err != nil {
-			return fmt.Errorf("kprocessor.FromTypedProcessor: failed to deserialize key from byte array, %w", err)
+			return fmt.Errorf("kprocessor.FromTyped: failed to deserialize key from byte array, %w", err)
 		}
 
 		value := valueFactory()
 		if err := valueDeserializer(value, record.Value); err != nil {
-			return fmt.Errorf("kprocessor.FromTypedProcessor: failed to deserialize value from byte array, %w", err)
->>>>>>> d433e78 (feat: implement OrderedConsumer and TypedProcessor)
+			return fmt.Errorf("kprocessor.FromTyped: failed to deserialize value from byte array, %w", err)
 		}
 
 		return p.Process(ctx, key, value, RecordContext{

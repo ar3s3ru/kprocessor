@@ -1,4 +1,4 @@
-module github.com/ar3s3ru/kafka-go-processor
+module github.com/ar3s3ru/kprocessor
 
 go 1.18
 
